@@ -18,9 +18,7 @@ def plot_figure(figure):
     Input:
         figure: Figure number in the manuscript to plot
     '''
-    if figure == 1:
-        print("1")
-    elif figure == 3:    
+    if figure == 1:  
         #-----------------------------------------------------------------------
         # Figure: Excess synchrony estimate - True synaptic weight relationship
         #-----------------------------------------------------------------------
@@ -30,7 +28,7 @@ def plot_figure(figure):
                                                                duration=300.)
         # Analyze the spike data
         analyze_trains_monosynapse.analyze(p,Tr0,Tt0,Tr,Tt)        
-    elif figure == 5:    
+    elif figure == 2:    
         #-----------------------------------------------------------------------
         # Figure: Jitter interval length as classification parameter
         #-----------------------------------------------------------------------
