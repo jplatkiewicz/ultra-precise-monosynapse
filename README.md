@@ -3,7 +3,7 @@
 The codes in this repository were used to produce the figures in (Platkiewicz et al., in preparation).
 
 # Requirements
-The codes require NumPy, SciPy, and Brian 2.
+The codes require NumPy, SciPy, Brian 2, and Matplotlib.
 
 # Instructions to Run
 All the functions to plot the figures are called in 'figures_manuscript_jp.py'.
