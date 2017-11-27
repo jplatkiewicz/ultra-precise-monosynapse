@@ -68,7 +68,7 @@ def generate(Ntrial,duration):
     PSC = 25*pA              # Postsynaptic current ammplitude
     g0 = PSC/(Esyn-muI)
     latency = 1.5*ms         # Spike transmission delay
-    Nphase = 10.
+    Nphase = 10
     phase = duration/Nphase  # Duration of session with fixed synaptic weight 
     wmin = .5                # Minimal synaptic weight
     wmax = 4.                # Maximal synaptic weight
@@ -246,6 +246,6 @@ def generate(Ntrial,duration):
     #show()
 
     # Save the relevant model parameters and the resulting spike trains
-    parameters = np.array([Ntrial,duration,period,Fs])
-    
-    return parameters,train_ref0,train_targ0,train_ref,train_targ
+    parameters = np.array([Ntrial,duration,period,Fs,Nphase])
+
+    return parameters,weight_value,train_ref,train_targ

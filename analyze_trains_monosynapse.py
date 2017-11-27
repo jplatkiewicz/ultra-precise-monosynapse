@@ -18,78 +18,81 @@ import matplotlib.pyplot as plt
 # Define function
 #------------------------------------------------------------------------------
 
-def analyze(parameters,train_ref0,train_targ0,train_ref,train_targ):
+def analyze(parameters,weight_value,train_ref,train_targ):
     '''
     Inputs:
         parameters: Generative simulation parameters
-        train_ref0: Reference train set (synapse off)
-        train_targ0: Target train set (synapse off) 
-        train_ref: Reference train set (synapse on)
-        train_targ: Target train set (synapse on)         
+        weight_value: Simulated monosynaptic weight values
+        train_ref: Reference train set 
+        train_targ: Target train set          
     Outputs:
         Figure: Relationship between the estimate and the true value
     '''
 
     #--------------------------------------------------------------------------
-    # Load the spike data
+    # Extract the spike data
     #--------------------------------------------------------------------------
 
-    Ntrial = parameters[0]         # Number of pairs
-    duration = parameters[1]       # Trial duration in (ms)
-    interval_true = parameters[2]  # Nonstationarity timescale in (ms)
-    Fs = parameters[3]             # Sampling frequency
+    Ntrial = int(parameters[0])  # Number of pairs
+    duration = parameters[1]     # Trial duration in (ms)
+    period = parameters[2]       # Nonstationarity timescale in (ms)
+    Fs = parameters[3]           # Sampling frequency
+    Nphase = int(parameters[4])
+    phase = duration/Nphase      # Trial duration per weight value in (ms)
 
-    train0 = np.append(train_ref0,train_targ0) 
-    cell0 = np.int64(np.append(np.zeros(len(train_ref0)),
-                               np.ones(len(train_targ0))))
     train = np.append(train_ref,train_targ) 
     cell = np.int64(np.append(np.zeros(len(train_ref)),
                                np.ones(len(train_targ))))
 
+    #--------------------------------------------------------------------------
+    # Predict the weight based on the model
+    #--------------------------------------------------------------------------
+
     # Measure the distribution of synchrony count before injection
-    synch_width = 1.*5
-    #--WITH SYNAPSE--
+    synch_width = 5.
     Tref = synch_width*np.floor(train_ref/synch_width)
-    lmax = lag[np.argmax(Craw[0,1])]
-    x = (train_targ-lmax)*(np.sign(train_targ-lmax)+1)/2.
-    x = x[np.nonzero(x)]
     Ttarg = synch_width*np.floor(train_targ/synch_width)
     Tsynch = np.array(list(set(Tref) & set(Ttarg)))
     synch_count = np.bincount(np.int64(np.floor(Tsynch/(Ntrial*phase))),
                               minlength=Nphase)
-    #--WITHOUT SYNAPSE--
-    Tref0 = synch_width*np.floor(train_ref0/synch_width)
-    lmax0 = lag[np.argmax(Craw0[0,1])]
-    x = (train_targ0-lmax0)*(np.sign(train_targ0-lmax0)+1)/2.
-    x = x[np.nonzero(x)]
-    Ttarg0 = synch_width*np.floor(x/synch_width)
-    Tsynch0 = np.array(list(set(Tref0) & set(Ttarg0)))
-    synch_count0 = np.bincount(np.int64(np.floor(Tsynch0/(Ntrial*phase))),
-                               minlength=Nphase)
 
-    # Excess synchrony count unbiased estimation
-    delta = period
-    Ndelta = int(Ntrial*duration/delta)
-    count_ref = np.bincount(np.int64(np.floor(train_ref/delta)),minlength=Ndelta)
-    count_targ = np.bincount(np.int64(np.floor(train_targ/delta)),minlength=Ndelta)
-    count_synch = np.bincount(np.int64(np.floor(Tsynch/delta)),minlength=Ndelta)
-    Ndelta_phase = int(Ntrial*phase/delta)
-    RS_prod = sum(np.reshape(count_ref*count_synch,(Nphase,Ndelta_phase)),axis=1)
-    alpha = RS_prod/(delta*synch_count)  
-    RT_prod = sum(np.reshape(count_ref*count_targ,(Nphase,Ndelta_phase)),axis=1)
+    # Estimate the excess synchrony count using the formula
+    Nperiod = int(Ntrial*duration/period)
+    count_ref = np.bincount(np.int64(np.floor(train_ref/period)),
+                            minlength=Nperiod)
+    count_targ = np.bincount(np.int64(np.floor(train_targ/period)),
+                             minlength=Nperiod)
+    count_synch = np.bincount(np.int64(np.floor(Tsynch/period)),
+                              minlength=Nperiod)
+    Nperiod_phase = int(Ntrial*phase/period)
+    RS_prod = np.sum(np.reshape(count_ref*count_synch,(Nphase,Nperiod_phase)),
+                     axis=1)
+    alpha = RS_prod/(period*synch_count)  
+    RT_prod = np.sum(np.reshape(count_ref*count_targ,(Nphase,Nperiod_phase)),
+                     axis=1)
     alphaN = alpha[~np.isnan(alpha)]
     synch_countN = synch_count[~np.isnan(alpha)]
     RT_prodN = RT_prod[~np.isnan(alpha)]
-    estimate = (synch_countN-RT_prodN/delta)/(1-alphaN)
+    estimate = (synch_countN-RT_prodN/period)/(1-alphaN)
 
-    # Check the result
-    x = g0/gm*weight_value
+    #--------------------------------------------------------------------------
+    # Assess the model's prediction
+    #--------------------------------------------------------------------------
+
+    # Quantify the prediction's performance
+    x = weight_value
     y = estimate
     gradient,intercept,r_value,p_value,std_err = stats.linregress(x,y)
     print("(Linear regression) Correlation coefficient: ",r_value,
           "p-value: ",p_value)
 
+    # Represent the result
     FigE = plt.figure()
+    plt.title('Model Prediction Assessment',fontsize=18)
+    plt.xlabel('True synaptic weight',fontsize=18)
+    plt.ylabel('Excess synchrony estimate',fontsize=18)
+    plt.xticks(fontsize=18)
+    plt.yticks(fontsize=18)   
     plt.plot(x,y,'ok')
     plt.plot(x,gradient*x+intercept,'-r')
     plt.show()

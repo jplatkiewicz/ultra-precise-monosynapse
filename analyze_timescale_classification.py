@@ -27,10 +27,10 @@ def analyze(parameters,train_ref0,train_targ0):
     '''
 
     #--------------------------------------------------------------------------
-    # Load the spike data
+    # Extract the spike data
     #--------------------------------------------------------------------------
 
-    Ntrial = parameters[0]         # Number of pairs
+    Ntrial = int(parameters[0])    # Number of pairs
     duration = parameters[1]       # Trial duration in (ms)
     interval_true = parameters[2]  # Nonstationarity timescale in (ms)
     Fs = parameters[3]             # Sampling frequency
